@@ -1,0 +1,277 @@
+---
+title: "Monitoria de Econometria II"
+author: "Jean Haendell"
+output: html_document
+---
+# Regressão Linear no R: estimação e inferência
+
+### Carregando as bibliotecas
+Uma boa prática no uso do R é a de sempre carregar as bibliotecas que serão utilizadas no início do script. Para a ap1, essas instalações não serão mandatórias. 
+
+
+Não obstante, para fins didáticos, irei carregar a biblioteca `wooldridge`, que contém
+diversas bases de dados. Caso você queira replicar os exemplos, basta: 1) instalar a referida biblioteca utilizando o comando `install.packages("wooldridge")`; 2) carregar a biblioteca utilizando o seguinte código:
+```{r}
+library(wooldridge)
+```
+Caso você utilize o Rstudio no mesmo computador novamente, provavelmente não será necessário instalar a biblioteca, bastando apenas carregá-la com o `library()`.
+
+<br>
+
+### Regressão Linear no R - MQO
+Para fazer uma regressão linear no R, basta utilizar a função `lm()` com seus respectivos argumentos. Para um modelo com duas variáveis independentes, temos, por exemplo:
+```{r eval=FALSE, include=TRUE}
+lm(data = base_de_dados, variavel_dependente ~ variavelindependente1 + variavelindependente2)
+```
+ Obs.: `lm()` vem de *linear model*.
+ 
+
+ Nesse caso, foi considerado um modelo com duas variáveis independentes. `data = base_de_dados` indica qual base de dados estamos utilizando.
+
+<br>
+
+#### Exemplo : Fazendo a regressão do salário em relação à educação e experiência
+
+Nesse exemplo, faremos a regressão do salário em educação e experiência, utilizando a base de dados "wage1", presente na biblioteca wooldridge.
+
+ Podemos visualizar essa base de dados, bem como alguns valores, da seguinte maneira:
+```{r}
+head(wage1)
+```
+A funcão `head()` serve para termos nocão de quais variáveis estão presentes nessa base de dados, bem como ter conhecimento dos valores que essas variáveis recebem.
+
+Nesse exemplo, estamos interessados nas variáveis salário, educação e experiência, que nessa base de dados estão como `lwage` (nesse caso, `lwage` significa $\log(wage)$. Isso é feito para que possamos ter uma resposta em percentual), `educ` e `exper`.
+
+Isto é, o nosso modelo econométrico é: $$\log(wage) = \beta_0 + \beta_1 educ + \beta_2 exper$$
+
+Rodando esse modelo e salvando-o em um objeto chamado `modelo1`, temos
+```{r}
+modelo1 <- lm(data = wage1, lwage ~ educ + exper)
+```
+
+<br>
+
+##### **ATENÇÃO**: 
+tanto `<-` quanto `=` servem para atribuírmos valores a novos objetos (variáveis). Nesse caso, basicamente estamos criando uma nova variável (`modelo1`) e atribuindo o resultado do modelo estimado por `lm(data = wage1, lwage ~ educ + exper)` a ela.
+
+<br>
+Como dito, o modelo estimado foi salvo em `modelo1`. Agora, precisamos verificar os resultados. Para isso, podemos utilizar a função `summary()`. Em suma, essa função resume os resultados do modelo estimado e nos retorna o seguinte: 
+```{r}
+summary(modelo1)
+```
+<br>
+
+### Interpretação dos resultados
+
+Agora, vamos interpretar os resultados da estimação anterior.
+
+
+1. *Interpretando os efeitos marginais*:
+O aumento de um ano de educação leva, em média, a um aumento de $9,79 \%$ do salário, mantendo a experiência fixa. (A interpretação de $exper$ fica a cargo do estudante.)
+
+2. *Realizando o teste de hipóteses*:
+Vamos realizar o teste de hipóteses para a variável $educ$. Nossa hipótese nula
+é de que um ano a mais de educação não tem efeito no salário. Nossa hipótese 
+alternativa, nesse caso, será a de que a educação tem efeito no salário (embora 
+seja convencional considerar como hipótese alternativa que esse efeito é positivo, aqui
+considerarei também a possibilidade de ser negativo). O teste de hipóteses é, então,
+construído da seguinte maneira: $$\text{H}_0: \beta_1 = 0 
+$$ $$\text{H}_1: \beta_1 \ne 0 $$
+
+Olhando para o resultado da regressão, vemos que o valor $t$ em educ é de $12,489$. Se $|t|>2$, então a variável é estatisticamente significante ao nível de 5%. Logo, $educ$ é estatisticamente significante. (a significância de $exper$ fica a cargo do estudante).
+
+ **Atenção**: Considerar uma variável estatisticamente significante se |t| > 2 é uma regra de bolso com base em um teste bicaudal com um nível de significância de 5%, em que o $t$ crítico é próximo de $2$. Mais explicações serão dadas na monitoria.
+
+3. *Coeficiente de determinação - $R^2$*:
+O $R^2$ observado é de $0.2493$, o que significa que $24,93 \%$ da variação na variável
+dependente é causada pela variação nas variáveis independentes.
+
+4. *Significância Global*: 
+Para analisar a significância global de um modelo, olharemos para o $\text{p-value}$ do modelo, que se encontra na última linha do nosso `summary(modelo1)`. O p-valor indica
+o menor nível de significância em que uma variável (ou um modelo, nesse caso) é estatisticamente significante. Quanto menor o nível de significância, mais difícil é para uma variável (ou modelo) ser estatisticamente significante. Por isso, se observarmos no resultado que $p-value < 0.05$, sabemos que o modelo também será significante ao nível de $5\%$, que é o mais utilizado. Por isso, nesse caso, rejeitamos a hipótese nula de que o modelo **não** é estatisticamente significante.
+
+Em suma: o teste de hipóteses se dá por: $$\text{H}_0: \beta_j = 0, j = 1, 2$$ $$\text{H}_1: \beta_j \ne 0, \text{para qualquer} \ j = 1, 2$$.
+
+Observamos, nesse modelo, um p-valor de $\text{2.2e-16}$, um número beeeem inferior a $0.05$. Ou seja, o modelo é globalmente significante.
+$$\text{p-value} = \text{2.2e-16} < 0.05 \implies \text{rejeita a hipótese nula}.$$
+<br>
+
+## Vamos a um exemplo da lista?
+
+### Questão COCA-
+Nessa questão, precisamos carregar a base de dados `coca`, que não pertence à biblioteca do Wooldridge. No meu caso, especificarei o caminho do arquivo no computador que estou utilizando. Entretanto, para carregar, basta baixar a base no sigaa, ir em "file", no canto superior esquerdo, e depois em "open file".
+
+No meu caso, o caminho do arquivo é o seguinte:
+```{r}
+load("/Users/emilia.franca/Downloads/coca.RData")
+```
+
+Com a base de dados carregada, podemos ver as variáveis que estão presentes nela usando nossa conhecida função `head()`:
+```{r}
+head(coca)
+```
+
+O modelo dado pela questão 1 é construído da seguinte maneira:
+$$
+price = \beta_1 + \beta_2quant + \beta_3qual + \beta_4trend + e
+$$
+
+Trazendo para a linguagem do R, temos
+```{r}
+modelococa = lm(data = coca, PRICE ~ QUANT + QUAL + TREND)
+```
+
+Após ter definido e salvo o modelo, podemos ver os resultados da estimação:
+```{r}
+summary(modelococa)
+```
+
+Podemos, então, começar a responder a questão.
+
+##### a) **Estime o modelo acima e interprete os resultados.**
+- O $R^2$ do modelo é de 0.5097, o que significa que 50,97% da variação no preço é explicada pela variação nas variáveis independentes.
+
+<br>
+
+- Para analisar a significância dos coeficientes, podemos construir um teste de hipóteses como $$\text{H}_0: \beta_j = 0, j = 2, 3, 4$$ $$\text{H}_1: \beta_j \ne 0, \ j = 2, 3, 4$$
+Nesse caso, rejeitamos a hipótese nula ao nível de 5% se $|t_{\hat{\beta_j}}|>2$.
+1. **QUANT**: o valor de $t$ é de -5,892. Em módulo, esse valor é maior que 2. Portanto, QUANT é estatisticamente significante ao nível de 5%.
+2. **QUAL**: o valor de $t$ é de 0,572. Em módulo, esse valor é menor que 2. Portanto, falhamos em rejeitar a hipótese nula ao nível de 5%.
+3. **TREND**: o valor de $t$ é de -1,699. Em módulo, esse valor é menor que 2. Portanto, falhamos em rejeitar a hipótese nula ao nível de 5%.
+
+<br>
+
+- Para testar a significância global do modelo, construímos o seguinte teste de hipóteses:
+$$\text{H}_0:\beta _j = 0, j = 2, 3, 4$$ $$\text{H}_1: \beta_j \ne 0, \text{para qualquer} \ j = 2, 3, 4$$
+Diremos que o modelo é globalmente significante se o p-valor global for inferior a 0.05. Observamos que o p-valor deste modelo é igual a 3.806e-08. Este valor é menor que 0.05, portanto, o modelo é globalmente significante.
+
+<br>
+
+- Passemos agora para a análise dos efeitos marginais das variáveis explicativas do modelo:
+1. **QUANT**: Um aumento de uma unidade na quantidade leva, em média, a uma diminuição de 0,06 no preço, tudo o mais constante.
+2. **QUAL**: Um aumento de uma unidade na qualidade leva, em média, a um aumento de 0,12 no preço, tudo o mais constante.
+3. **TREND**: Um aumento de uma unidade no tempo leva, em média, a uma diminuição de 2,35 no preço, tudo o mais constante.
+
+
+<br>
+
+- Para analisar a coerência teórica, lançaremos mão de nossos conhecimentos econômicos. 
+1. **QUANT**: Faz sentido de que o aumento da quantidade ofertada leve a uma diminuição dos preços, tudo o mais constante. Logo, é coerente. Outra explicação pode ser a fornecida no item b)
+2. **QUAL**: Faz sentido que o aumento da qualidade da cocaína eleve seu preço, tudo o mais constante. Logo, é coerente.
+3. **TREND**: A interpretação aqui é mais dúbia: o passar dos anos faz com que o preço diminua, tudo o mais constante. Faz-se necessário conhecer
+mais do fenômeno para chegar a uma conclusão, mas vale lembrar que essa variável não é significante para explicar preço nesse modelo. Mais informações no item d)
+
+<br> 
+
+##### b) **Argumenta-se que quanto maior o número de vendas, maior a possibilidade de se ser preso; assim, os vendedores aceitam preços mais baixos se puderem vender quantidades maiores. Estabeleça $H_0$ e $H_A$ apropriadas para testar essa hipótese**
+- Nesse caso, queremos realizar o teste de hipóteses para a variável QUANT. Como o coeficiente que a acompanha no modelo é o $\beta_2$, o teste de hipóteses se dá pelo seguinte:
+$$\text{H}_0: \beta_2 = 0$$ $$\text{H}_1: \beta_2 \ne 0$$
+O teste se dá da mesma forma que no primeiro item. Lá, vimos que a quantidade é estatisticamente significante, porque seu valor $t$, em módulo, é maior que 2. Portanto, rejeitamos a hipótese nula, que na prática dizia que a quantidade não tem impacto no preço.
+
+<br> 
+
+
+##### c) **Teste a hipótese de que a qualidade da cocaína não tem qualquer influência no preço contra a alternativa de que paga-se um prêmio pela cocaína de melhor qualidade.**
+- Nesse caso, queremos realizar o teste de hipóteses para a variável QUAL. Como o coeficiente que a acompanha no modelo é o $\beta_3$, o teste de hipóteses se dá pelo seguinte:
+$$\text{H}_0: \beta_3 = 0$$ $$\text{H}_1: \beta_3 \ne 0$$
+Como vimos, essa variável não é estatisticamente significante. Portanto, falhamos em rejeitar a hipótese nula, que na pratica diz que a qualidade da cocaína não influencia no preço.
+
+
+### Questão Sleep
+```{r}
+load("/Users/emilia.franca/Downloads/sleep75.RData")
+head(sleep75)
+
+```
+O modelo a ser estimado nessa questão é $$\text{dormir} = \beta_0 + \beta_1 \text{trabtot} + u$$. Ou seja, queremos saber se o número de horas trabalhadas influencia no sono. Vamos aos itens.
+
+<br> 
+
+##### a) **Reporte seus resultados na forma de equação, juntamente com o número de observações e $R^2$. O que o intercepto significa nessa equação?**
+
+Primeiro, precisamos passar o modelo para a linguagem do R e estimá-lo.
+```{r}
+modelosleep1= lm(data = sleep75, sleep ~ totwrk)
+summary(modelosleep1)
+```
+Agora, podemos reportar os resultados: 
+
+- Nessa estimação, verificamos que um aumento de 1 minuto de trabalho durante a semana leva a uma diminuição de 0,15 minutos dormidos durante a semana. 
+- Reportando os resultados em forma de equação, temos $$\hat{\text{dormir}} = 3586 - 0,15trabtot$$
+- O número de observações é de 706 (degrees of freedom + números de parâmetros do modelo). 
+- O intercepto significa o total de minutos dormidos na semana caso o número de minutos trabalhados na semana seja igual a zero. Isto é, se $totwrk = 0$, então o número de minutos dormidos na semana será aproximadamente $3586$, o que dá em torno de 60 horas.
+
+
+<br>
+
+##### b) **Se trabtot aumenta em duas horas, em quanto tempo se estima que dormir irá cair? Você acha que isso é um efeito grande? **
+
+Se houver um aumento de duas horas em trabtot, temos um aumento de 120 minutos, o que provoca uma diminuição de $120 \cdot 0,15$ em sleep. Ou seja, cai em 18 o número de minutos dormidos na semana. Podemos dizer que este é um efeito pequeno para um aumento de 2 horas de trabalho.
+
+### Questão Tuna
+
+```{r}
+load("/Users/emilia.franca/Downloads/tuna.RData")
+head(tuna)
+```
+
+<br>
+
+##### a) **Estime, por mínimos quadrados, o modelo log-linear $$\ln(SAL1) = \beta_1 + \beta_2 \text{APR1} + \beta_3 \text{APR2} + \beta_4 \text{APR3} + \beta_5 \text{DISP} + \beta_6 \text{DispAd} + e$$**
+
+Passando o modelo para a linguagem do R, temos 
+```{r}
+modelotuna= lm(data = tuna, log(sal1) ~ apr1 + apr2 + apr3 + disp + dispad)
+summary(modelotuna)
+```
+
+##### b) **Discuta e interprete as estimativas de $\beta_2$, $\beta_3$ e $\beta_4$$**
+
+- $\beta_2$: o valor estimado de $\beta_2$ indica que o aumento de 1 unidade no preço da marca 1 faz com que as vendas da marca 1 caiam em 374,63\%. Na prática, toda a venda da marca 1 é eliminada.
+- $\beta_3$: o valor estimado de $\beta_3$ indica que o aumento de 1 unidade no preço da marca 2 faz com que as vendas da marca 1 aumentem em 114,95\%. Na prática, a venda da marca 1 mais que dobra.
+- $\beta_4$: o valor estimado de $\beta_4$ indica que o aumento de 1 unidade no preço da marca 3 faz com que as vendas da marca 1 aumentem em 128,80\%. Na prática, a venda da marca 1 mais que dobra.
+
+<br>
+
+##### c) **Os sinais e as grandezas relativas de $\beta_5$ e $\beta_6$ são coerentes com a lógica econômica? **
+O sinal positivo tanto na estimativa do coeficiente em disp e dispad faz sentido: um aumento na propaganda leva a aumentos nas vendas. Além disso, faz sentido que dispad seja maior que disp, pois a primeira envolve propaganda em duas frentes, e a segunda em apenas uma.
+
+##### d) **No nível $\alpha = 0,05$ de significância...**
+
+- O primeiro teste proposto é $$\text{H}_0: \beta_5 = 0$$ $$\text{H}_1: \beta_5 \ne 0$$
+O valor t de disp é maior que 2. Logo, rejeitamos a hipótese nula.
+
+- O segundo teste é $$\text{H}_0: \beta_6 = 0$$ $$\text{H}_1: \beta_6 \ne 0$$
+O valor t de dispad é maior que 2. Logo, rejeitamos a hipótese nula.
+
+- O terceiro teste é $$\text{H}_0: \beta_5 = 0, \beta_6 = 0$$ $$\text{H}_1: \beta_5 \  \text{ou} \ \beta_6 \ne 0$$
+
+Neste caso, podemos proceder da seguinte maneira:
+```{r}
+# Ajustando o modelo completo
+modelo_completo <- lm(data = tuna, log(sal1) ~ apr1 + apr2 + apr3 + disp + dispad)
+
+# Ajustando o modelo reduzido
+modelo_reduzido <- lm(data = tuna, log(sal1) ~ apr1 + apr2 + apr3)
+
+# Realizando o teste de hipóteses
+resultado <- anova(modelo_reduzido, modelo_completo)
+print(resultado)
+```
+
+Nesse teste, se o p-valor for menor que 0.05, rejeitamos a hipótese nula, o que acontece nesse caso, pois o p-valor é de 4.172e-11
+
+- O quarto teste é $$\text{H}_0: \beta_6 \le \beta_5 $$ $$\text{H}_1: \beta_6 > \beta_5$$
+Nesse caso, faremos
+```{r}
+# Carregue o pacote necessário
+library(car)
+
+# Realize o teste de hipótese
+test <- linearHypothesis(modelotuna, "dispad - disp = 0")
+print(test)
+
+
+
+```
+Nesse caso, se o p-valor for menor que 0,05, rejeitamos a hipótese nula.
